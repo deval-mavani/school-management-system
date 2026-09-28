@@ -11,6 +11,8 @@ npm run dev
 
 ## Screens
 
+- Login: any username/password works; choose Principal, Teacher, or Student from the role dropdown.
+- Role home: each role receives a tailored dashboard and can sign out to switch roles.
 - Home: student card, attendance summary, homework, next class, notices.
 - Timetable: switch between five weekdays.
 - Homework: view instructions, mark complete, and restore to pending.

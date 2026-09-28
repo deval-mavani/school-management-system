@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, CheckCheck, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, FileText, GraduationCap, House, LayoutGrid, MapPin, Megaphone, Plus, ShieldCheck, Sparkles, UserRound, Users, type LucideIcon } from "lucide-react";
+import { useState, type FormEvent, type ReactNode } from "react";
+import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, CheckCheck, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, FileText, GraduationCap, House, LayoutGrid, LogIn, MapPin, Megaphone, Plus, School, ShieldCheck, Sparkles, UserRound, Users, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,13 @@ const notices = [
   { title: "Library books, new adventures", category: "Library", date: "21 Sep", text: "The September reading collection is here. Visit the library during your lunch break and borrow up to two books with your student ID.", icon: BookOpen },
 ];
 const nav = [{ name: "Home", icon: House }, { name: "Timetable", icon: CalendarDays }, { name: "Homework", icon: BookOpen }, { name: "More", icon: LayoutGrid }];
+type Role = "Principal" | "Teacher" | "Student";
+
+const roleCopy: Record<Role, { eyebrow: string; title: string; name: string; subtitle: string; icon: LucideIcon }> = {
+  Principal: { eyebrow: "PRINCIPAL SPACE", title: "Lead with clarity.", name: "Dr. Meera Kapoor", subtitle: "Greenwood Public School · Academic year 2026–27", icon: School },
+  Teacher: { eyebrow: "TEACHER SPACE", title: "Your classroom, connected.", name: "Ms. Priya Sharma", subtitle: "Class 8 · Section A · Mathematics", icon: Users },
+  Student: { eyebrow: "STUDENT SPACE", title: "A good day to learn.", name: "Aarav Sharma", subtitle: "Class 8 · Section A · Roll no. 12", icon: GraduationCap },
+};
 
 function IconTile({ icon: Icon, dark = false }: { icon: LucideIcon; dark?: boolean }) {
   return <span className={`icon-tile ${dark ? "dark" : ""}`}><Icon size={22} strokeWidth={1.8} /></span>;
@@ -39,7 +46,39 @@ function ListRow({ icon, title, subtitle, end, onClick }: { icon: LucideIcon; ti
   return <Button variant="ghost" className="list-row" onClick={onClick}><IconTile icon={icon} /><span className="row-text"><strong>{title}</strong><small>{subtitle}</small></span>{end || <ChevronRight size={18} />}</Button>;
 }
 
+function LoginScreen({ onLogin }: { onLogin: (role: Role) => void }) {
+  const [role, setRole] = useState<Role>("Student");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); onLogin(role); };
+  return <div className="login-screen">
+    <div className="login-brand"><span className="brand-icon"><GraduationCap size={23} /></span><span>schoolday<span className="brand-dot">.</span><small>GREENWOOD PUBLIC SCHOOL</small></span></div>
+    <Card className="login-card"><div className="login-mark"><LogIn size={22} /></div><p className="eyebrow">WELCOME BACK</p><h1>School, connected.</h1><p className="login-copy">Sign in to your school space and pick up where you left off.</p>
+      <form onSubmit={submit} className="login-form"><label>Email or username<input value={email} onChange={event => setEmail(event.target.value)} placeholder="any username" autoComplete="username" /></label><label>Password<input value={password} onChange={event => setPassword(event.target.value)} placeholder="any password" type="password" autoComplete="current-password" /></label><label>Sign in as<select value={role} onChange={event => setRole(event.target.value as Role)}><option>Student</option><option>Teacher</option><option>Principal</option></select></label><Button type="submit" className="full-button login-button">Continue as {role}<ArrowRight size={17} /></Button></form>
+      <p className="demo-hint"><ShieldCheck size={14} />Demo access · Any credentials work</p>
+    </Card>
+    <p className="login-footer">A little more connected, every day.<br /><span>Demo workspace · Sample data</span></p>
+  </div>;
+}
+
+function RoleDashboard({ role, go, openNotices }: { role: Role; go: (target: string) => void; openNotices: () => void }) {
+  const copy = roleCopy[role];
+  const RoleIcon = copy.icon;
+  if (role === "Student") return null;
+  const principal = role === "Principal";
+  return <>
+    <div className="greeting"><div><p>{copy.eyebrow}</p><h1>{copy.title}</h1><span>Good morning, {copy.name.split(" ").slice(-1)[0]}.</span></div><Avatar className="student-avatar"><AvatarFallback>{principal ? "MK" : "PS"}</AvatarFallback></Avatar></div>
+    <Card className="student-card role-card"><div className="student-card-top"><Badge className="student-badge"><RoleIcon size={13} /> {copy.eyebrow}</Badge><span>2026–27</span></div><div className="student-card-main"><div><h2>{copy.name}</h2><p>{copy.subtitle}</p></div><Button size="icon" className="student-arrow" aria-label="View profile" onClick={() => go("Profile")}><ArrowRight size={21} /></Button></div><div className="student-card-footer"><ShieldCheck size={15} /><span>{principal ? "Every decision shapes a better school day." : "Your students are ready to learn."}</span></div></Card>
+    <div className="summary-grid"><Button variant="outline" className="summary-card" onClick={() => go(principal ? "Attendance" : "Timetable")}><span><CheckCheck size={19} />{principal ? "Attendance" : "Today"}<ArrowRight size={14} /></span><strong>{principal ? "92.4" : "05"}<span>{principal ? "%" : " classes"}</span></strong><small>{principal ? "Whole school this week" : "Your planned periods"}</small><Progress value={principal ? 92.4 : 80} aria-label="Role summary" /></Button><Button variant="outline" className="summary-card" onClick={openNotices}><span><Megaphone size={19} />Updates<ArrowRight size={14} /></span><strong>{principal ? "08" : "03"}<span> new</span></strong><small>{principal ? "Needs your attention" : "School notices to review"}</small><div className="task-markers"><span /><span /><span className="done" /></div></Button></div>
+    <Section title={principal ? "School overview" : "Your teaching day"}><div className="quick-grid">{(principal ? [{ label: "Attendance", icon: CheckCheck, page: "Attendance" }, { label: "Notices", icon: Megaphone, page: "Notices" }, { label: "Fees", icon: CreditCard, page: "Fees" }, { label: "Profile", icon: UserRound, page: "Profile" }] : [{ label: "Timetable", icon: CalendarDays, page: "Timetable" }, { label: "Homework", icon: BookOpen, page: "Homework" }, { label: "Notices", icon: Megaphone, page: "Notices" }, { label: "Profile", icon: UserRound, page: "Profile" }]).map(item => <Button key={item.label} variant="ghost" className="quick-action" onClick={() => item.label === "Notices" ? openNotices() : go(item.page)}><IconTile icon={item.icon} /><span>{item.label}</span></Button>)}</div></Section>
+    <Section title={principal ? "Needs your attention" : "Next in your day"} action="View all" onClick={openNotices}><Card className="next-class"><div className="next-class-top"><Badge variant="secondary">{principal ? "SCHOOL UPDATE" : "PERIOD 01"}</Badge><span><Clock3 size={14} />{principal ? "This week" : "09:00 – 09:45 AM"}</span></div><div className="class-details"><IconTile icon={principal ? ClipboardList : Plus} dark /><div><h3>{principal ? "Attendance review" : "Mathematics · Class 8A"}</h3><p>{principal ? "Review attendance trends before Friday." : "Linear equations · Room 204"}</p></div><ChevronRight size={18} /></div><div className="class-footer"><span><UserRound size={14} />{principal ? "Academic office" : "24 students"}</span><span><MapPin size={14} />{principal ? "Main office" : "Room 204"}</span></div></Card></Section>
+    <Section title={principal ? "Latest notice" : "Classroom reminders"}><Card className="notice-preview"><span className="notice-date">26<small>SEP</small></span><div><Badge variant="secondary">SCHOOL UPDATE</Badge><h3>{principal ? "Parent–teacher meet" : "Submit weekly lesson plan"}</h3><p>{principal ? "A conversation about the term ahead." : "Due by Thursday · Staff room"}</p></div><Button variant="ghost" size="icon" aria-label="Read notice" onClick={openNotices}><ChevronRight /></Button></Card></Section>
+  </>;
+}
+
 export default function SchoolApp() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [role, setRole] = useState<Role>("Student");
   const [page, setPage] = useState("Home");
   const [day, setDay] = useState("21");
   const [filter, setFilter] = useState("Pending");
@@ -52,6 +91,7 @@ export default function SchoolApp() {
   const go = (target: string) => { setPage(target); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const activeNav = nav.some(n => n.name === page) ? page : "More";
   const openNotices = () => { setRead(true); go("Notices"); };
+  if (!loggedIn) return <div className="prototype-stage"><div className="desktop-brand"><GraduationCap size={24} /><span>schoolday<span className="brand-dot">.</span></span><Badge variant="outline">INTERACTIVE PROTOTYPE</Badge></div><LoginScreen onLogin={nextRole => { setRole(nextRole); setLoggedIn(true); setPage("Home"); }} /></div>;
 
   function taskCard(h: typeof homework[number]) {
     return <Card key={h.id} className="task-card"><button className="task-content" onClick={() => openTask(h)}><div className="task-top"><span className="subject-label"><h.icon size={15} />{h.subject}</span><span className="due">{completed.includes(h.id) ? "Completed" : `Due ${h.due.toLowerCase()}`}</span></div><h3>{h.title}</h3><div className="task-bottom"><span>Class 8 · Section A</span><ArrowRight size={17} /></div></button></Card>;
@@ -60,9 +100,11 @@ export default function SchoolApp() {
   return <div className="prototype-stage">
     <div className="desktop-brand"><GraduationCap size={24} /><span>schoolday<span className="brand-dot">.</span></span><Badge variant="outline">INTERACTIVE PROTOTYPE</Badge></div>
     <div className="app-shell">
-      <header className="app-header"><button className="school-brand" onClick={() => go("Home")} aria-label="Schoolday home"><span className="brand-icon"><GraduationCap size={23} /></span><span>schoolday<span className="brand-dot">.</span><small>GREENWOOD PUBLIC SCHOOL</small></span></button><Button size="icon" variant="outline" className="notification-button" aria-label="View notifications" onClick={openNotices}><Bell size={20} />{!read && <span className="notification-dot" />}</Button></header>
+      <header className="app-header"><button className="school-brand" onClick={() => go("Home")} aria-label="Schoolday home"><span className="brand-icon"><GraduationCap size={23} /></span><span>schoolday<span className="brand-dot">.</span><small>GREENWOOD PUBLIC SCHOOL</small></span></button><div className="header-actions"><Badge variant="secondary" className="role-pill">{role}</Badge><Button size="icon" variant="outline" className="notification-button" aria-label="View notifications" onClick={openNotices}><Bell size={20} />{!read && <span className="notification-dot" />}</Button><Button variant="ghost" className="sign-out" onClick={() => setLoggedIn(false)}>Sign out</Button></div></header>
       <main>
         {page === "Home" ? <>
+          <RoleDashboard role={role} go={go} openNotices={openNotices} />
+          {role === "Student" && <>
           <div className="greeting"><div><p>MONDAY, 21 SEPTEMBER</p><h1>A good day to learn.</h1><span>Let’s make it a great one, Aarav.</span></div><button aria-label="Open student profile" onClick={() => go("Profile")}><Avatar className="student-avatar"><AvatarFallback>AS</AvatarFallback></Avatar></button></div>
           <Card className="student-card"><div className="student-card-top"><Badge className="student-badge"><GraduationCap size={13} /> STUDENT SPACE</Badge><span>2026–27</span></div><div className="student-card-main"><div><h2>Aarav Sharma</h2><p>Class 8 <span>·</span> Section A <span>·</span> Roll no. 12</p></div><Button size="icon" className="student-arrow" onClick={() => go("Profile")} aria-label="View student details"><ArrowRight size={21} /></Button></div><div className="student-card-footer"><ShieldCheck size={15} /><span>A little progress, every day.</span></div></Card>
           <div className="summary-grid"><Button variant="outline" className="summary-card" onClick={() => go("Attendance")}><span><CheckCheck size={19} />Attendance<ArrowRight size={14} /></span><strong>95.2<span>%</span></strong><small>20 of 21 school days</small><Progress value={95.2} aria-label="Attendance 95.2 percent" /></Button><Button variant="outline" className="summary-card" onClick={() => go("Homework")}><span><ClipboardList size={19} />Homework<ArrowRight size={14} /></span><strong>{String(pending.length).padStart(2, "0")}<span> tasks</span></strong><small>{pending.length ? "A little focus goes a long way" : "You’re all caught up!"}</small><div className="task-markers">{homework.map(h => <span key={h.id} className={completed.includes(h.id) ? "done" : ""} />)}</div></Button></div>
@@ -70,6 +112,7 @@ export default function SchoolApp() {
           <Section title="Up next" action="Full timetable" onClick={() => go("Timetable")}><Card className="next-class"><div className="next-class-top"><Badge variant="secondary">PERIOD 01</Badge><span><Clock3 size={14} />09:00 – 09:45 AM</span></div><div className="class-details"><IconTile icon={Plus} dark /><div><h3>Mathematics</h3><p>Linear equations</p></div><Button variant="ghost" size="icon" onClick={() => setDialog({ title: "Mathematics · Period 01", description: "Linear equations with Ms. Priya Sharma. Monday, 21 September, 09:00–09:45 AM in Room 204. Bring your textbook and mathematics notebook." })} aria-label="View mathematics class"><ChevronRight /></Button></div><div className="class-footer"><span><UserRound size={14} />Ms. Priya Sharma</span><span><MapPin size={14} />Room 204</span></div></Card></Section>
           <Section title="A little homework" action="View all" onClick={() => go("Homework")}>{pending.length ? <div className="task-stack">{pending.slice(0, 2).map(taskCard)}</div> : <Card className="empty-state"><CheckCheck /><h3>All done for now.</h3><p>Enjoy a well-earned break.</p></Card>}</Section>
           <Section title="Around the school" action="All notices" onClick={openNotices}><Card className="notice-preview"><span className="notice-date">26<small>SEP</small></span><div><Badge variant="secondary">SCHOOL UPDATE</Badge><h3>Parent–teacher meet</h3><p>A conversation about your progress.</p></div><Button variant="ghost" size="icon" aria-label="Read parent-teacher notice" onClick={() => setDialog({ title: notices[0].title, description: notices[0].text })}><ChevronRight /></Button></Card></Section>
+          </>}
         </> : <>
           <div className="page-heading"><Button variant="outline" size="icon" onClick={() => go("Home")} aria-label="Back to home"><ArrowLeft /></Button><div><p>YOUR STUDENT SPACE</p><h1>{page}</h1></div></div>
           {page === "Timetable" && <><div className="intro-line"><h2>September 2026</h2><Badge variant="secondary">5 classes a day</Badge></div><Tabs value={day} onValueChange={setDay}><TabsList className="week-selector">{["Mon", "Tue", "Wed", "Thu", "Fri"].map((d, i) => <TabsTrigger key={d} value={String(21 + i)}><span>{d}</span><strong>{21 + i}</strong></TabsTrigger>)}</TabsList></Tabs><div className="timeline">{lessons.map((_, i) => { const lesson = lessons[(i + Number(day) - 21) % lessons.length]; return <div className="timeline-item" key={i}><div className="time-label"><strong>{lessons[i].time}</strong><span>{lessons[i].end}</span></div><Card className="lesson-card"><span className="subject-label">PERIOD {String(i + 1).padStart(2, "0")}</span><h3>{lesson.subject}</h3><p>{lesson.topic}</p><small>{lesson.teacher} · {lesson.room}</small></Card></div>; })}</div><p className="footnote"><Clock3 size={15} />Lunch break · 12:00 – 1:00 PM</p></>}
